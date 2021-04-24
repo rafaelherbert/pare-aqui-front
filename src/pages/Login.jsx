@@ -19,7 +19,7 @@ export default function Login () {
 
         if (response.data.success) {
             UserManager.setUser(response.data.data);
-            window.location.href = "/";
+            window.location.href = "/home";
             return;
         } else {
             setError(response.data.message);
