@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
 import axios from "axios";
 
 export default function Lots() {
@@ -10,11 +11,10 @@ export default function Lots() {
     const getLots = async () => {
         try {
             const filters = [];
-            if (maxPrice) filters.push(`menor_preco=0&maior_preco${maxPrice}`);
-            if (typeFilter)
-                filters.push(`tipos_escolhidos=${typeFilter}`);
-            if (sizeFilter)
-                filters.push(`tamanhos_escolhidos=${sizeFilter}`);
+
+            if (maxPrice)   filters.push(`menor_preco=0&maior_preco${maxPrice}`);
+            if (typeFilter) filters.push(`tipos_escolhidos=${typeFilter}`);
+            if (sizeFilter) filters.push(`tamanhos_escolhidos=${sizeFilter}`);
 
             const res = await axios.get(
                 `https://pare-aqui.herokuapp.com/vaga?${encodeURI(filters.join("&"))}`
@@ -32,9 +32,12 @@ export default function Lots() {
 
     return (
         <div>
-            <p>
+            <div className="d-grid gap-2">
+                <Link className="btn btn-primary" to="/">
+                    Voltar
+                </Link>
                 <a
-                    className="btn btn-primary mt-3"
+                    className="btn btn-primary"
                     data-bs-toggle="collapse"
                     href="#collapseExample"
                     role="button"
@@ -43,8 +46,8 @@ export default function Lots() {
                 >
                     Exibir filtros
                 </a>
-            </p>
-            <div className="collapse" id="collapseExample">
+            </div>
+            <div className="collapse mt-3" id="collapseExample">
                 <div className="card card-body">
                     <label htmlFor="customRange2" className="form-label">
                         Preço máximo:{" "}
@@ -116,6 +119,17 @@ export default function Lots() {
                                     <div>Tipo: {lot.vaga_tipo}</div>
                                     <div>Tamanho: {lot.vaga_tamanho}</div>
                                 </p>
+                                <button className="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Toggle right offcanvas</button>
+
+<div className="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
+  <div className="offcanvas-header">
+    <h5 id="offcanvasRightLabel">Offcanvas right</h5>
+    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div className="offcanvas-body">
+    ...
+  </div>
+</div>
                             </div>
                         </div>
                     );
