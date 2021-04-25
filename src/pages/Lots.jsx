@@ -1,26 +1,36 @@
 import React, { useEffect, useState } from "react";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import axios from "axios";
+import UserManager from "../UserManager";
 
 export default function Lots() {
     const [lots, setLots] = useState([]);
     const [typeFilter, setTypeFilter] = useState("");
     const [sizeFilter, setSizeFilter] = useState("");
     const [maxPrice, setMaxPrice] = useState(0);
+    const [lotScheduleDate, setLotScheduleDate] = useState(null);
+    const [lotScheduleIndex, setLotScheduleIndex] = useState(null);
+    const [lotScheduleFeedback, setLotScheduleFeedback] = useState("");
 
     const getLots = async () => {
         try {
             const filters = [];
 
-            if (maxPrice)   filters.push(`menor_preco=0&maior_preco${maxPrice}`);
+            if (maxPrice) filters.push(`menor_preco=0&maior_preco${maxPrice}`);
             if (typeFilter) filters.push(`tipos_escolhidos=${typeFilter}`);
             if (sizeFilter) filters.push(`tamanhos_escolhidos=${sizeFilter}`);
 
             const res = await axios.get(
-                `https://pare-aqui.herokuapp.com/vaga?${encodeURI(filters.join("&"))}`
+                `https://pare-aqui.herokuapp.com/vaga?${encodeURI(
+                    filters.join("&")
+                )}`
             );
             setLots(res.data.data);
-            console.log(`https://pare-aqui.herokuapp.com/vaga?${encodeURI(filters.join("&"))}`);
+            console.log(
+                `https://pare-aqui.herokuapp.com/vaga?${encodeURI(
+                    filters.join("&")
+                )}`
+            );
         } catch (error) {
             console.log("Error", error);
         }
@@ -28,7 +38,40 @@ export default function Lots() {
 
     useEffect(() => {
         getLots();
+        const myOffcanvas = document.getElementById("offcanvasRight");
+        const listener = function (e) {
+            setLotScheduleIndex(null);
+            setLotScheduleDate(null);
+            setLotScheduleFeedback("");
+        };
+
+        myOffcanvas.addEventListener("hide.bs.offcanvas", listener);
+        return () => {
+            myOffcanvas.removeEventListener("hide.bs.offcanvas", listener);
+        };
     }, []);
+
+    const scheduleLot = async (e) => {
+        e.preventDefault();
+        const user = UserManager.getUser();
+        console.log(user, lotScheduleIndex, lotScheduleDate);
+        try {
+            const res = await axios.post(
+                `https://pare-aqui.herokuapp.com/vaga/agendamento?`,
+                {
+                    vaga_id: lotScheduleIndex,
+                    momento: `${lotScheduleDate} 00:00:00`,
+                    usuario_id: user.id,
+                }
+            );
+
+            if (res.data.success) {
+                setLotScheduleFeedback("Vaga agendada com sucesso.");
+            }
+        } catch (error) {
+            console.log("ERROR", error);
+        }
+    };
 
     return (
         <div>
@@ -74,7 +117,14 @@ export default function Lots() {
                         className="form-select"
                         aria-label="Default select example"
                         multiple
-                        onChange={(e) => setTypeFilter(Array.from(e.target.selectedOptions, option => option.value).join(","))}
+                        onChange={(e) =>
+                            setTypeFilter(
+                                Array.from(
+                                    e.target.selectedOptions,
+                                    (option) => option.value
+                                ).join(",")
+                            )
+                        }
                     >
                         <option value="31">Padrão</option>
                         <option value="32">Fila</option>
@@ -89,7 +139,14 @@ export default function Lots() {
                         className="form-select"
                         aria-label="Default select example"
                         multiple
-                        onChange={(e) => setSizeFilter(Array.from(e.target.selectedOptions, option => option.value).join(","))}
+                        onChange={(e) =>
+                            setSizeFilter(
+                                Array.from(
+                                    e.target.selectedOptions,
+                                    (option) => option.value
+                                ).join(",")
+                            )
+                        }
                     >
                         <option value="35">Moto</option>
                         <option value="36">Ônibus</option>
@@ -98,7 +155,12 @@ export default function Lots() {
                         <option value="39">Veículo Grande</option>
                     </select>
 
-                    <div className="btn btn-primary mt-3" onClick={() => getLots()}>Aplicar filtros</div>
+                    <div
+                        className="btn btn-primary mt-3"
+                        onClick={() => getLots()}
+                    >
+                        Aplicar filtros
+                    </div>
                 </div>
             </div>
 
@@ -119,21 +181,64 @@ export default function Lots() {
                                     <div>Tipo: {lot.vaga_tipo}</div>
                                     <div>Tamanho: {lot.vaga_tamanho}</div>
                                 </p>
-                                <button className="btn btn-primary" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasRight" aria-controls="offcanvasRight">Toggle right offcanvas</button>
-
-<div className="offcanvas offcanvas-end" tabindex="-1" id="offcanvasRight" aria-labelledby="offcanvasRightLabel">
-  <div className="offcanvas-header">
-    <h5 id="offcanvasRightLabel">Offcanvas right</h5>
-    <button type="button" className="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-  <div className="offcanvas-body">
-    ...
-  </div>
-</div>
+                                <button
+                                    className="btn btn-primary"
+                                    type="button"
+                                    data-bs-toggle="offcanvas"
+                                    data-bs-target="#offcanvasRight"
+                                    aria-controls="offcanvasRight"
+                                    onClick={() => {
+                                        console.log(lot.vaga_id);
+                                        setLotScheduleIndex(lot.vaga_id);
+                                    }}
+                                >
+                                    Agendar Vaga
+                                </button>
                             </div>
                         </div>
                     );
                 })}
+
+            <div
+                className="offcanvas offcanvas-end"
+                id="offcanvasRight"
+                aria-labelledby="offcanvasRightLabel"
+            >
+                <div className="offcanvas-header">
+                    <h5 id="offcanvasRightLabel">Agendar Vaga</h5>
+                    <button
+                        type="button"
+                        className="btn-close text-reset"
+                        data-bs-dismiss="offcanvas"
+                        aria-label="Close"
+                    ></button>
+                </div>
+                <div className="offcanvas-body">
+                    {
+                        lotScheduleFeedback &&
+                        <div className="alert alert-success">
+                            {lotScheduleFeedback}
+                        </div>
+                    }
+                    <form onSubmit={scheduleLot}>
+                        <label htmlFor="customRange2" className="form-label">
+                            Data do agendamento
+                        </label>
+                        <input
+                            type="date"
+                            className="form-control"
+                            id="customRange2"
+                            onChange={(e) => {
+                                setLotScheduleDate(e.target.value);
+                            }}
+                            required
+                        />
+                        <button type="submit" className="btn btn-primary mt-3">
+                            Agendar
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
     );
 }

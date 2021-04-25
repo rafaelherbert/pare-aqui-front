@@ -4,7 +4,9 @@ import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Landing from './pages/Landing.jsx';
 import Lots from './pages/Lots.jsx';
+import LotHistory from './pages/LotHistory.jsx';
 import UserManager from "./UserManager.js";
+import React from "react";
 
 export default function App() {
     return (
@@ -15,17 +17,16 @@ export default function App() {
                         UserManager.clearUser();
                         return <Redirect to="/login" />;
                     }}/>
-                    <Route path="/login">
-                        <Login />
-                    </Route>
-                    <Route path="/register">
-                        <Cadastro />
-                    </Route>
-                    <PrivateRoute path="/home">
-                        <Home />
+                    <Route path="/login" component={Login} exact/>
+                    <Route path="/register" component={Cadastro} exact/>
+                    <PrivateRoute path="/home" exact>
+                        <Home></Home>
                     </PrivateRoute>
-                    <PrivateRoute path="/lots">
-                        <Lots />
+                    <PrivateRoute path="/lots" exact>
+                        <Lots></Lots>
+                    </PrivateRoute>
+                    <PrivateRoute path="/lots/history" exact>
+                        <LotHistory></LotHistory>
                     </PrivateRoute>
                     <Route path="/" render={() => {
                         if (UserManager.isUserLoggedIn()) return <Redirect to="/home" />;
@@ -38,7 +39,7 @@ export default function App() {
 }
 
 
-function PrivateRoute({ children, ...rest }) {
+function PrivateRoute({ children = null, ...rest }) {
     return (
       <Route
         {...rest}
