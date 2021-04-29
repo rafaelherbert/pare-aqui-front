@@ -60,7 +60,7 @@ export default function Lots() {
                 `https://pare-aqui.herokuapp.com/vaga/agendamento?`,
                 {
                     vaga_id: lotScheduleIndex,
-                    momento: `${lotScheduleDate} 00:00:00`,
+                    momento: `${lotScheduleDate}:00`,
                     usuario_id: user.id,
                 }
             );
@@ -225,11 +225,11 @@ export default function Lots() {
                             Data do agendamento
                         </label>
                         <input
-                            type="date"
+                            type="datetime-local"
                             className="form-control"
                             id="customRange2"
                             onChange={(e) => {
-                                setLotScheduleDate(e.target.value);
+                                setLotScheduleDate(e.target.value.replace("T", " "));
                             }}
                             required
                         />
