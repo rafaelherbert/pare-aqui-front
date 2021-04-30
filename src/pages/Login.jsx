@@ -2,6 +2,8 @@ import UserManager from '../UserManager.js';
 import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import api from 'api/index.js';
+import Loading from 'components/Loading.jsx';
+import ErrorAlert from 'components/ErrorAlert.jsx';
 
 export default function Login() {
 
@@ -36,39 +38,25 @@ export default function Login() {
 
     };
 
-    const showLoading = () => {
-        return (
-            <div className="spinner-grow" role="status">
-                <span className="visually-hidden">Loading...</span>
-            </div>
-        );
-    };
-
-    const showError = () => {
-        if (error !== "") {
-            return (
-                <div className="alert alert-danger" role="alert">{error}</div>
-            );
-        }
-    };
-
     const showPageContent = () => {
         if (loading) {
-            return showLoading();
+            return (
+                <Loading />
+            );
         } else {
             return (
                 <>
-                    {showError()}
+                    <ErrorAlert errorMessage={error} />
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
-                            <label htmlFor="user" className="form-label">Usuário</label>
-                            <input type="email" autoComplete="username" className="form-control" id="user" placeholder="name@example.com" onChange={(e) => {
+                            <label htmlFor="user" className="form-label">Seu E-Mail</label>
+                            <input type="email" required autoComplete="username" value={userEmail} className="form-control" id="user" placeholder="name@example.com" onChange={(e) => {
                                 setUserEmail(e.target.value);
                             }} />
                         </div>
                         <div className="mb-3">
-                            <label htmlFor="pass" className="form-label">Senha</label>
-                            <input type="password" autoComplete="current-password" className="form-control" id="pass" onChange={(e) => {
+                            <label htmlFor="pass" className="form-label">Sua Senha</label>
+                            <input type="password" autoComplete="current-password" value={pass} className="form-control" id="pass" onChange={(e) => {
                                 setPass(e.target.value);
                             }} />
                         </div>
