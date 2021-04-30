@@ -3,7 +3,7 @@ import UserManager from '../UserManager.js';
 import { Link } from 'react-router-dom';
 import api from 'api/index.js';
 import Loading from 'components/Loading.jsx';
-import ErrorAlert from 'components/ErrorAlert.jsx';
+import Alert from 'components/Alert.jsx';
 
 export default function Cadastro() {
 
@@ -59,7 +59,7 @@ export default function Cadastro() {
             return (
                 <>
                     <form onSubmit={handleSubmit}>
-                        <ErrorAlert errorMessage={error} />
+                        <Alert message={error} />
                         <div className="mb-3">
                             <label htmlFor="email" className="form-label">Seu E-Mail</label>
                             <input required type="email" className="form-control" value={userEmail} id="email" placeholder="name@example.com" onChange={(e) => {

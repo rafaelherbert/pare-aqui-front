@@ -1,6 +1,8 @@
+import api from "api";
+import Alert from "components/Alert";
+import Loading from "components/Loading";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import axios from "axios";
 import UserManager from "../UserManager";
 
 export default function Lots() {
@@ -11,6 +13,10 @@ export default function Lots() {
     const [lotScheduleDate, setLotScheduleDate] = useState(null);
     const [lotScheduleIndex, setLotScheduleIndex] = useState(null);
     const [lotScheduleFeedback, setLotScheduleFeedback] = useState("");
+    const [lotScheduleFeedbackType, setLotScheduleFeedbackType] = useState("danger");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
 
     const getLots = async () => {
         try {
@@ -20,24 +26,26 @@ export default function Lots() {
             if (typeFilter) filters.push(`tipos_escolhidos=${typeFilter}`);
             if (sizeFilter) filters.push(`tamanhos_escolhidos=${sizeFilter}`);
 
-            const res = await axios.get(
-                `https://pare-aqui.herokuapp.com/vaga?${encodeURI(
-                    filters.join("&")
-                )}`
-            );
-            setLots(res.data.data);
-            console.log(
-                `https://pare-aqui.herokuapp.com/vaga?${encodeURI(
-                    filters.join("&")
-                )}`
-            );
+            setLoading(true);
+            const response = await api.get(`/vaga?${encodeURI(filters.join("&"))}`);
+            setLoading(false);
+
+            if (response.data.success) {
+                setError("");
+                setLots(response.data.data);
+            } else {
+                setError(response.data.message);
+                setLots([]);
+            }
+
         } catch (error) {
-            console.log("Error", error);
+            setLoading(false);
+            setError("Sistema temporariamente fora do ar, por favor tente novamente mais tarde!");
+            console.log(error);
         }
     };
 
     useEffect(() => {
-        getLots();
         const myOffcanvas = document.getElementById("offcanvasRight");
         const listener = function (e) {
             setLotScheduleIndex(null);
@@ -53,152 +61,175 @@ export default function Lots() {
 
     const scheduleLot = async (e) => {
         e.preventDefault();
-        const user = UserManager.getUser();
-        console.log(user, lotScheduleIndex, lotScheduleDate);
         try {
-            const res = await axios.post(
-                `https://pare-aqui.herokuapp.com/vaga/agendamento?`,
+            const user = UserManager.getUser();
+
+            setLoading(true);
+            const res = await api.post(
+                `/vaga/agendamento?`,
                 {
                     vaga_id: lotScheduleIndex,
                     momento: `${lotScheduleDate}:00`,
                     usuario_id: user.id,
                 }
             );
+            setLoading(false);
+
+            setLotScheduleFeedback(res.data.message);
 
             if (res.data.success) {
-                setLotScheduleFeedback("Vaga agendada com sucesso.");
+                setLotScheduleFeedbackType("success");
+            } else {
+                setLotScheduleFeedbackType("danger");
             }
         } catch (error) {
-            console.log("ERROR", error);
+            setLoading(false);
+            setError("Sistema temporariamente fora do ar, por favor tente novamente mais tarde!");
+            console.log(error);
         }
     };
 
-    return (
-        <div>
-            <div className="d-grid gap-2">
-                <Link className="btn btn-primary" to="/">
-                    Voltar
-                </Link>
-                <a
-                    className="btn btn-primary"
-                    data-bs-toggle="collapse"
-                    href="#collapseExample"
-                    role="button"
-                    aria-expanded="false"
-                    aria-controls="collapseExample"
-                >
-                    Exibir filtros
-                </a>
-            </div>
-            <div className="collapse mt-3" id="collapseExample">
+    const filterBox = () => {
+        return (
+            <div className="my-3" id="filtersBox">
                 <div className="card card-body">
-                    <label htmlFor="customRange2" className="form-label">
-                        Preço máximo:{" "}
-                        {maxPrice === 0 ? "Ilimitado" : `R$ ${maxPrice}`}
-                    </label>
-                    <input
-                        type="range"
-                        className="form-range"
-                        min="0"
-                        max="1000"
-                        step="0.01"
-                        value={maxPrice}
-                        id="customRange2"
-                        onChange={(e) => {
-                            setMaxPrice(e.target.value);
-                        }}
-                    />
+                    <h5 className="card-title">Filtros</h5>
 
-                    <label htmlFor="lotType" className="form-label mt-2">
-                        Tipo de Vaga
-                    </label>
-                    <select
-                        id="lotType"
-                        className="form-select"
-                        aria-label="Default select example"
-                        multiple
-                        onChange={(e) =>
-                            setTypeFilter(
-                                Array.from(
-                                    e.target.selectedOptions,
-                                    (option) => option.value
-                                ).join(",")
-                            )
-                        }
-                    >
-                        <option value="31">Padrão</option>
-                        <option value="32">Fila</option>
-                        <option value="33">Espinha de Peixe</option>
-                    </select>
+                    <div className="row">
+                        <div className="col-md-4 mt-3">
+                            <label htmlFor="maxPrice" className="form-label">
+                                Preço máximo:{" "}
+                                {maxPrice === 0 ? "Ilimitado" : `R$ ${maxPrice}`}
+                            </label>
+                            <input
+                                type="range"
+                                className="form-range"
+                                min="0"
+                                max="1000"
+                                step="0.01"
+                                value={maxPrice}
+                                id="maxPrice"
+                                onChange={(e) => {
+                                    setMaxPrice(parseFloat(e.target.value));
+                                }}
+                            />
+                        </div>
 
-                    <label htmlFor="lotSize" className="form-label mt-3">
-                        Tamanho da Vaga
-                    </label>
-                    <select
-                        id="lotSize"
-                        className="form-select"
-                        aria-label="Default select example"
-                        multiple
-                        onChange={(e) =>
-                            setSizeFilter(
-                                Array.from(
-                                    e.target.selectedOptions,
-                                    (option) => option.value
-                                ).join(",")
-                            )
-                        }
-                    >
-                        <option value="35">Moto</option>
-                        <option value="36">Ônibus</option>
-                        <option value="37">Veículo Pequeno</option>
-                        <option value="38">Veículo Médio</option>
-                        <option value="39">Veículo Grande</option>
-                    </select>
+                        <div className="col-md-4 mt-3">
+                            <label htmlFor="lotType" className="form-label">
+                                Tipo de Vaga
+                            </label>
+                            <select
+                                id="lotType"
+                                className="form-select"
+                                multiple
+                                onChange={(e) =>
+                                    setTypeFilter(
+                                        Array.from(
+                                            e.target.selectedOptions,
+                                            (option) => option.value
+                                        ).join(",")
+                                    )
+                                }
+                            >
+                                <option value="31">Padrão</option>
+                                <option value="32">Fila</option>
+                                <option value="33">Espinha de Peixe</option>
+                            </select>
+                        </div>
 
-                    <div
+                        <div className="col-md-4 mt-3">
+                            <label htmlFor="lotSize" className="form-label">
+                                Tamanho da Vaga
+                            </label>
+                            <select
+                                id="lotSize"
+                                className="form-select"
+                                multiple
+                                onChange={(e) =>
+                                    setSizeFilter(
+                                        Array.from(
+                                            e.target.selectedOptions,
+                                            (option) => option.value
+                                        ).join(",")
+                                    )
+                                }
+                            >
+                                <option value="35">Moto</option>
+                                <option value="36">Ônibus</option>
+                                <option value="37">Veículo Pequeno</option>
+                                <option value="38">Veículo Médio</option>
+                                <option value="39">Veículo Grande</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button
                         className="btn btn-primary mt-3"
                         onClick={() => getLots()}
+                        disabled={loading ? true : false}
                     >
                         Aplicar filtros
-                    </div>
+                    </button>
                 </div>
             </div>
+        );
+    };
 
-            {lots.length > 0 &&
-                lots.map((lot, i) => {
+    const showLots = () => {
+        if (loading) {
+            return (
+                <Loading />
+            );
+        } else {
+            if (lots.length > 0) {
+                return lots.map((lot, i) => {
                     const location = `${lot.rua},${lot.numero},${lot.cidade},${lot.estado},${lot.pais}`;
                     const src = `https://maps.google.com/maps?width=100%&amp;height=400&amp;hl=pt-br&amp;q=${location}&amp;ie=UTF8&amp;t=&amp;z=16&amp;iwloc=A&amp;output=embed"`;
                     const ifr = `<iframe width="100%" height="200" src="${src}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>`;
                     return (
-                        <div className="card mt-4" key={i}>
-                            <div dangerouslySetInnerHTML={{ __html: ifr }} />
-                            <div className="card-body">
-                                <p className="card-text">
-                                    <div>
-                                        {lot.rua}, {lot.numero} - {lot.bairro},{" "}
-                                        {lot.estado}
-                                    </div>
-                                    <div>Tipo: {lot.vaga_tipo}</div>
-                                    <div>Tamanho: {lot.vaga_tamanho}</div>
-                                </p>
-                                <button
-                                    className="btn btn-primary"
-                                    type="button"
-                                    data-bs-toggle="offcanvas"
-                                    data-bs-target="#offcanvasRight"
-                                    aria-controls="offcanvasRight"
-                                    onClick={() => {
-                                        console.log(lot.vaga_id);
-                                        setLotScheduleIndex(lot.vaga_id);
-                                    }}
-                                >
-                                    Agendar Vaga
-                                </button>
+                        <div className="col-md-4">
+                            <div className="card mt-4" key={i}>
+                                <div dangerouslySetInnerHTML={{ __html: ifr }} />
+                                <div className="card-body">
+                                    <p className="card-text">
+
+                                        <div>
+                                            {lot.rua}, {lot.numero} - {lot.bairro},{" "}
+                                            {lot.estado}
+                                        </div>
+                                        <div>Tipo: {lot.vaga_tipo}</div>
+                                        <div>Tamanho: {lot.vaga_tamanho}</div>
+                                        <div>Preço: R${lot.vaga_preco}</div>
+                                        <button
+                                            className="btn btn-primary mt-3"
+                                            type="button"
+                                            data-bs-toggle="offcanvas"
+                                            data-bs-target="#offcanvasRight"
+                                            aria-controls="offcanvasRight"
+                                            onClick={() => {
+                                                console.log(lot.vaga_id);
+                                                setLotScheduleIndex(lot.vaga_id);
+                                            }}
+                                        >
+                                            Agendar Vaga
+                                        </button>
+
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    );
-                })}
 
+                    );
+                });
+            } else {
+                return null;
+            }
+        }
+    };
+
+    const sideBarRightScheduler = () => {
+        return (
             <div
                 className="offcanvas offcanvas-end"
                 id="offcanvasRight"
@@ -214,20 +245,16 @@ export default function Lots() {
                     ></button>
                 </div>
                 <div className="offcanvas-body">
-                    {
-                        lotScheduleFeedback &&
-                        <div className="alert alert-success">
-                            {lotScheduleFeedback}
-                        </div>
-                    }
+                    <Alert message={lotScheduleFeedback} type={lotScheduleFeedbackType} />
                     <form onSubmit={scheduleLot}>
-                        <label htmlFor="customRange2" className="form-label">
+                        <label htmlFor="scheduleDate" className="form-label">
                             Data do agendamento
                         </label>
                         <input
                             type="datetime-local"
                             className="form-control"
-                            id="customRange2"
+                            id="scheduleDate"
+                            placeholder="YYYY-MM-DD HH:mm:SS"
                             onChange={(e) => {
                                 setLotScheduleDate(e.target.value.replace("T", " "));
                             }}
@@ -239,6 +266,26 @@ export default function Lots() {
                     </form>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
+
+    const showPageContent = () => {
+        return (
+            <>
+                <div className="d-grid gap-2">
+                    <Link className="btn btn-primary" to="/">
+                        Voltar
+                    </Link>
+                </div>
+                {filterBox()}
+                <Alert message={error} />
+                <div className="row">
+                    {showLots()}
+                </div>
+                {sideBarRightScheduler()}
+            </>
+        );
+    };
+
+    return showPageContent();
 }

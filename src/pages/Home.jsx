@@ -10,7 +10,6 @@ export default function Home () {
                 <MenuItem name="Buscar Vagas" path="/lots"></MenuItem>
                 <MenuItem name="Agendar Vagas" path="/lots/assign"></MenuItem>
                 <MenuItem name="Histórico de Vagas" path="/lots/history"></MenuItem>
-                <MenuItem name="Configurações" path="/config"></MenuItem>
                 <MenuItem name="Relatar Flanelinha" path="/report"></MenuItem>
                 <MenuItem name="Logout" path="/logout"></MenuItem>
             </Menu>

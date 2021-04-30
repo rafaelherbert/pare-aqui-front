@@ -7,7 +7,6 @@ export default function Landing () {
             <Menu>
                 <MenuItem name="Buscar Vagas" path="/lots"></MenuItem>
                 <MenuItem name="Login" path="/login"></MenuItem>
-                <MenuItem name="Configurações" path="/config"></MenuItem>
             </Menu>
         </div>
     );

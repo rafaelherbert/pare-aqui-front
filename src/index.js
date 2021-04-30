@@ -4,7 +4,4 @@ import App from './App.js';
 import './index.scss';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 
-ReactDOM.render(
-  <App></App>,
-  document.getElementById('root')
-);
+ReactDOM.render(<App />, document.getElementById('root'));

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import React, { useState } from 'react';
 import api from 'api/index.js';
 import Loading from 'components/Loading.jsx';
-import ErrorAlert from 'components/ErrorAlert.jsx';
+import Alert from 'components/Alert.jsx';
 
 export default function Login() {
 
@@ -46,7 +46,7 @@ export default function Login() {
         } else {
             return (
                 <>
-                    <ErrorAlert errorMessage={error} />
+                    <Alert message={error} />
                     <form onSubmit={handleSubmit}>
                         <div className="mb-3">
                             <label htmlFor="user" className="form-label">Seu E-Mail</label>
