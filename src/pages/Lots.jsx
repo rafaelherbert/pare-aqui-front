@@ -2,7 +2,6 @@ import api from "api";
 import Alert from "components/Alert";
 import Loading from "components/Loading";
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import UserManager from "../UserManager";
 
 export default function Lots() {
@@ -272,11 +271,6 @@ export default function Lots() {
     const showPageContent = () => {
         return (
             <>
-                <div className="d-grid gap-2">
-                    <Link className="btn btn-primary" to="/">
-                        Voltar
-                    </Link>
-                </div>
                 {filterBox()}
                 <Alert message={error} />
                 <div className="row">
