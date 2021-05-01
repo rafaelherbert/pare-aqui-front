@@ -16,6 +16,35 @@ export default function Lots() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    const [maxPriceFilter, setMaxPriceFilter] = useState(100);
+    const [typesFilter, setTypesFilter] = useState([]);
+    const [sizesFilter, setSizesFilter] = useState([]);
+
+    const populateFilters = async () => {
+        try {
+            setLoading(true);
+            const response = await api.get(`/utils/filtro-vagas`);
+            if (response.data.success) {
+                setMaxPriceFilter(response.data.data.precoMaximo);
+                setTypesFilter(response.data.data.vagaTipos);
+                setSizesFilter(response.data.data.vagaTamanhos);
+                setLots(response.data.data);
+            } else {
+                setError(response.data.message);
+                setMaxPriceFilter(100);
+                setTypesFilter([]);
+                setSizesFilter([]);
+            }
+            setLoading(false);
+        } catch (error) {
+            setMaxPriceFilter(100);
+            setTypesFilter([]);
+            setSizesFilter([]);
+            setLoading(false);
+            setError("Sistema temporariamente fora do ar, por favor tente novamente mais tarde!");
+            console.log(error);
+        }
+    };
 
     const getLots = async () => {
         try {
@@ -27,7 +56,6 @@ export default function Lots() {
 
             setLoading(true);
             const response = await api.get(`/vaga?${encodeURI(filters.join("&"))}`);
-            setLoading(false);
 
             if (response.data.success) {
                 setError("");
@@ -37,7 +65,10 @@ export default function Lots() {
                 setLots([]);
             }
 
+            setLoading(false);
+
         } catch (error) {
+            setLots([]);
             setLoading(false);
             setError("Sistema temporariamente fora do ar, por favor tente novamente mais tarde!");
             console.log(error);
@@ -45,6 +76,8 @@ export default function Lots() {
     };
 
     useEffect(() => {
+        populateFilters();
+
         const myOffcanvas = document.getElementById("offcanvasRight");
         const listener = function (e) {
             setLotScheduleIndex(null);
@@ -68,7 +101,7 @@ export default function Lots() {
                 `/vaga/agendamento?`,
                 {
                     vaga_id: lotScheduleIndex,
-                    momento: `${lotScheduleDate}:00`,
+                    momento: `${lotScheduleDate.replace('T', ' ')}:00`,
                     usuario_id: user.id,
                 }
             );
@@ -89,94 +122,97 @@ export default function Lots() {
     };
 
     const filterBox = () => {
-        return (
-            <div className="my-3" id="filtersBox">
-                <div className="card card-body">
-                    <h5 className="card-title">Filtros</h5>
+        if (!loading) {
+            return (
+                <div className="my-3" id="filtersBox">
+                    <div className="card card-body">
+                        <h5 className="card-title">Filtros</h5>
 
-                    <div className="row">
-                        <div className="col-md-4 mt-3">
-                            <label htmlFor="maxPrice" className="form-label">
-                                Preço máximo:{" "}
-                                {maxPrice === 0 ? "Ilimitado" : `R$ ${maxPrice}`}
-                            </label>
-                            <input
-                                type="range"
-                                className="form-range"
-                                min="0"
-                                max="1000"
-                                step="0.01"
-                                value={maxPrice}
-                                id="maxPrice"
-                                onChange={(e) => {
-                                    setMaxPrice(parseFloat(e.target.value));
-                                }}
-                            />
+                        <div className="row">
+                            <div className="col-md-4 mt-3">
+                                <label htmlFor="maxPrice" className="form-label">
+                                    Preço máximo:{" " + (maxPrice === 0 ? "Ilimitado" : `R$ ${maxPrice}`)}
+                                </label>
+                                <input
+                                    type="range"
+                                    className="form-range"
+                                    min="0"
+                                    max={maxPriceFilter}
+                                    step="0.01"
+                                    value={maxPrice}
+                                    id="maxPrice"
+                                    onChange={(e) => {
+                                        setMaxPrice(parseFloat(e.target.value));
+                                    }}
+                                />
+                            </div>
+
+                            <div className="col-md-4 mt-3">
+                                <label htmlFor="lotType" className="form-label">
+                                    Tipo de Vaga
+                                </label>
+                                <select
+                                    id="lotType"
+                                    className="form-select"
+                                    multiple
+                                    onChange={(e) =>
+                                        setTypeFilter(
+                                            Array.from(
+                                                e.target.selectedOptions,
+                                                (option) => option.value
+                                            ).join(",")
+                                        )
+                                    }
+                                >
+                                    {typesFilter.map((type) => {
+                                        return (
+                                            <option value={type.id} key={type.id}>{type.tipo}</option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                            <div className="col-md-4 mt-3">
+                                <label htmlFor="lotSize" className="form-label">
+                                    Tamanho da Vaga
+                                </label>
+                                <select
+                                    id="lotSize"
+                                    className="form-select"
+                                    multiple
+                                    onChange={(e) =>
+                                        setSizeFilter(
+                                            Array.from(
+                                                e.target.selectedOptions,
+                                                (option) => option.value
+                                            ).join(",")
+                                        )
+                                    }
+                                >
+                                    {sizesFilter.map((size) => {
+                                        return (
+                                            <option value={size.id} key={size.id}>{size.tamanho}</option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
                         </div>
 
-                        <div className="col-md-4 mt-3">
-                            <label htmlFor="lotType" className="form-label">
-                                Tipo de Vaga
-                            </label>
-                            <select
-                                id="lotType"
-                                className="form-select"
-                                multiple
-                                onChange={(e) =>
-                                    setTypeFilter(
-                                        Array.from(
-                                            e.target.selectedOptions,
-                                            (option) => option.value
-                                        ).join(",")
-                                    )
-                                }
-                            >
-                                <option value="31">Padrão</option>
-                                <option value="32">Fila</option>
-                                <option value="33">Espinha de Peixe</option>
-                            </select>
-                        </div>
-
-                        <div className="col-md-4 mt-3">
-                            <label htmlFor="lotSize" className="form-label">
-                                Tamanho da Vaga
-                            </label>
-                            <select
-                                id="lotSize"
-                                className="form-select"
-                                multiple
-                                onChange={(e) =>
-                                    setSizeFilter(
-                                        Array.from(
-                                            e.target.selectedOptions,
-                                            (option) => option.value
-                                        ).join(",")
-                                    )
-                                }
-                            >
-                                <option value="35">Moto</option>
-                                <option value="36">Ônibus</option>
-                                <option value="37">Veículo Pequeno</option>
-                                <option value="38">Veículo Médio</option>
-                                <option value="39">Veículo Grande</option>
-                            </select>
-                        </div>
+                        <button
+                            className="btn btn-primary mt-3"
+                            onClick={() => getLots()}
+                            disabled={loading ? true : false}
+                        >
+                            Aplicar filtros
+                        </button>
                     </div>
-
-                    <button
-                        className="btn btn-primary mt-3"
-                        onClick={() => getLots()}
-                        disabled={loading ? true : false}
-                    >
-                        Aplicar filtros
-                    </button>
                 </div>
-            </div>
-        );
+            );
+        }
     };
 
     const showLots = () => {
-        if (loading) {
+        if (loading && lotScheduleDate == null) {
             return (
                 <Loading />
             );
@@ -244,25 +280,32 @@ export default function Lots() {
                     ></button>
                 </div>
                 <div className="offcanvas-body">
-                    <Alert message={lotScheduleFeedback} type={lotScheduleFeedbackType} />
-                    <form onSubmit={scheduleLot}>
-                        <label htmlFor="scheduleDate" className="form-label">
-                            Data do agendamento
-                        </label>
-                        <input
-                            type="datetime-local"
-                            className="form-control"
-                            id="scheduleDate"
-                            placeholder="YYYY-MM-DD HH:mm:SS"
-                            onChange={(e) => {
-                                setLotScheduleDate(e.target.value.replace("T", " "));
-                            }}
-                            required
-                        />
-                        <button type="submit" className="btn btn-primary mt-3">
-                            Agendar
-                        </button>
-                    </form>
+                    {loading ? (
+                        <Loading />
+                    ) : (
+                        <>
+                            <Alert message={lotScheduleFeedback} type={lotScheduleFeedbackType} />
+                            <form onSubmit={scheduleLot}>
+                                <label htmlFor="scheduleDate" className="form-label">
+                                    Data do agendamento
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    className="form-control"
+                                    id="scheduleDate"
+                                    placeholder="YYYY-MM-DD HH:mm:SS"
+                                    value={lotScheduleDate}
+                                    onChange={(e) => {
+                                        setLotScheduleDate(e.target.value);
+                                    }}
+                                    required
+                                />
+                                <button type="submit" className="btn btn-primary mt-3">
+                                    Agendar
+                                </button>
+                            </form>
+                        </>
+                    )}
                 </div>
             </div>
         );
