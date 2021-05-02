@@ -6,13 +6,17 @@ import UserManager from "../UserManager";
 
 export default function Lots() {
     const [lots, setLots] = useState([]);
-    const [typeFilter, setTypeFilter] = useState("");
-    const [sizeFilter, setSizeFilter] = useState("");
+    const [typeFilter, setTypeFilter] = useState([]);
+    const [sizeFilter, setSizeFilter] = useState([]);
     const [maxPrice, setMaxPrice] = useState(0);
-    const [lotScheduleDate, setLotScheduleDate] = useState(null);
+    const [lotScheduleDate, setLotScheduleDate] = useState("");
     const [lotScheduleIndex, setLotScheduleIndex] = useState(null);
     const [lotScheduleFeedback, setLotScheduleFeedback] = useState("");
     const [lotScheduleFeedbackType, setLotScheduleFeedbackType] = useState("danger");
+    const [lotOnlyParking, setLotOnlyParking] = useState(false);
+    const [lotWithoutAccidents, setLotWithoutAccidents] = useState(false);
+    const [lotWithoutFlanelinha, setLotWithoutFlanelinha] = useState(false);
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -50,9 +54,12 @@ export default function Lots() {
         try {
             const filters = [];
 
-            if (maxPrice) filters.push(`menor_preco=0&maior_preco${maxPrice}`);
-            if (typeFilter) filters.push(`tipos_escolhidos=${typeFilter}`);
-            if (sizeFilter) filters.push(`tamanhos_escolhidos=${sizeFilter}`);
+            if (maxPrice) filters.push(`menor_preco=0&maior_preco=${maxPrice}`);
+            if (typeFilter.length !== 0) filters.push(`tipos_escolhidos=${typeFilter.join(',')}`);
+            if (sizeFilter.length !== 0) filters.push(`tamanhos_escolhidos=${sizeFilter.join(',')}`);
+            if (lotOnlyParking) filters.push(`estacionamento=1`);
+            if (lotWithoutAccidents) filters.push(`sem_acidentes=1`);
+            if (lotWithoutFlanelinha) filters.push(`sem_flanelinha=1`);
 
             setLoading(true);
             const response = await api.get(`/vaga?${encodeURI(filters.join("&"))}`);
@@ -81,7 +88,7 @@ export default function Lots() {
         const myOffcanvas = document.getElementById("offcanvasRight");
         const listener = function (e) {
             setLotScheduleIndex(null);
-            setLotScheduleDate(null);
+            setLotScheduleDate("");
             setLotScheduleFeedback("");
         };
 
@@ -145,6 +152,21 @@ export default function Lots() {
                                         setMaxPrice(parseFloat(e.target.value));
                                     }}
                                 />
+                                <label className="form-check-label" htmlFor="onlyPrivateParking">
+                                    <input className="form-check-input" value="1" checked={lotOnlyParking ? true : false} type="checkbox" id="onlyPrivateParking" onChange={(e) => {
+                                        setLotOnlyParking(e.target.checked);
+                                    }} />&nbsp;Apenas Estacionamentos Privados
+                                </label>
+                                <label className="form-check-label" htmlFor="withoutAccidents">
+                                    <input className="form-check-input" value="1" checked={lotWithoutAccidents ? true : false} type="checkbox" id="withoutAccidents" onChange={(e) => {
+                                        setLotWithoutAccidents(e.target.checked);
+                                    }} />&nbsp;Sem Histórico de Acidentes
+                                </label>
+                                <label className="form-check-label d-none" htmlFor="withoutFlanelinhas">
+                                    <input className="form-check-input" value="1" checked={lotWithoutFlanelinha ? true : false} type="checkbox" id="withoutFlanelinhas" onChange={(e) => {
+                                        setLotWithoutFlanelinha(e.target.checked);
+                                    }} />&nbsp;Sem Flanelinha
+                                </label>
                             </div>
 
                             <div className="col-md-4 mt-3">
@@ -155,12 +177,13 @@ export default function Lots() {
                                     id="lotType"
                                     className="form-select"
                                     multiple
+                                    value={typeFilter}
                                     onChange={(e) =>
                                         setTypeFilter(
                                             Array.from(
                                                 e.target.selectedOptions,
                                                 (option) => option.value
-                                            ).join(",")
+                                            )
                                         )
                                     }
                                 >
@@ -180,12 +203,13 @@ export default function Lots() {
                                     id="lotSize"
                                     className="form-select"
                                     multiple
+                                    value={sizeFilter}
                                     onChange={(e) =>
                                         setSizeFilter(
                                             Array.from(
                                                 e.target.selectedOptions,
                                                 (option) => option.value
-                                            ).join(",")
+                                            )
                                         )
                                     }
                                 >
@@ -212,7 +236,7 @@ export default function Lots() {
     };
 
     const showLots = () => {
-        if (loading && lotScheduleDate == null) {
+        if (loading && lotScheduleDate === "") {
             return (
                 <Loading />
             );
@@ -223,34 +247,34 @@ export default function Lots() {
                     const src = `https://maps.google.com/maps?width=100%&amp;height=400&amp;hl=pt-br&amp;q=${location}&amp;ie=UTF8&amp;t=&amp;z=16&amp;iwloc=A&amp;output=embed"`;
                     const ifr = `<iframe width="100%" height="200" src="${src}" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>`;
                     return (
-                        <div className="col-md-4">
-                            <div className="card mt-4" key={i}>
+                        <div className="col-md-4" key={i}>
+                            <div className="card mt-4">
                                 <div dangerouslySetInnerHTML={{ __html: ifr }} />
                                 <div className="card-body">
-                                    <p className="card-text">
-
-                                        <div>
-                                            {lot.rua}, {lot.numero} - {lot.bairro},{" "}
-                                            {lot.estado}
-                                        </div>
-                                        <div>Tipo: {lot.vaga_tipo}</div>
-                                        <div>Tamanho: {lot.vaga_tamanho}</div>
-                                        <div>Preço: R${lot.vaga_preco}</div>
-                                        <button
-                                            className="btn btn-primary mt-3"
-                                            type="button"
-                                            data-bs-toggle="offcanvas"
-                                            data-bs-target="#offcanvasRight"
-                                            aria-controls="offcanvasRight"
-                                            onClick={() => {
-                                                console.log(lot.vaga_id);
-                                                setLotScheduleIndex(lot.vaga_id);
-                                            }}
-                                        >
-                                            Agendar Vaga
-                                        </button>
-
-                                    </p>
+                                    <span>
+                                        {lot.rua}, {lot.numero} - {lot.bairro},{" "}
+                                        {lot.estado}
+                                    </span>
+                                    <div>Tipo: {lot.vaga_tipo}</div>
+                                    <div>Tamanho: {lot.vaga_tamanho}</div>
+                                    {lot.estacionamento !== 0 ? (
+                                        <span className="badge bg-success">Estacionamento Privado</span>
+                                    ) : (
+                                        <span className="badge bg-danger">Vaga de Rua</span>
+                                    )}
+                                    <div>Preço: R${lot.vaga_preco}</div>
+                                    <button
+                                        className="btn btn-primary mt-3"
+                                        type="button"
+                                        data-bs-toggle="offcanvas"
+                                        data-bs-target="#offcanvasRight"
+                                        aria-controls="offcanvasRight"
+                                        onClick={() => {
+                                            setLotScheduleIndex(lot.vaga_id);
+                                        }}
+                                    >
+                                        Agendar Vaga
+                                    </button>
                                 </div>
                             </div>
                         </div>

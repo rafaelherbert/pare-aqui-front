@@ -4,7 +4,6 @@ import Login from "./pages/Login.jsx";
 import Home from "./pages/Home.jsx";
 import Landing from './pages/Landing.jsx';
 import Lots from './pages/Lots.jsx';
-import LotHistory from './pages/LotHistory.jsx';
 import UserManager from "./UserManager.js";
 import React from "react";
 import "./App.css";
@@ -52,9 +51,6 @@ export default function App() {
               <PrivateRoute path="/lots" exact>
                 <Lots></Lots>
               </PrivateRoute>
-              <PrivateRoute path="/lots/history" exact>
-                <LotHistory></LotHistory>
-              </PrivateRoute>
               <Route path="/" render={() => {
                 if (UserManager.isUserLoggedIn()) return <Redirect to="/home" />;
                 else return <Landing />;
@@ -66,7 +62,7 @@ export default function App() {
 
       <footer className="footer mt-auto py-3 bg-light">
         <div className="container">
-          <span className="text-muted">Esse trabalho foi desenvolvido para a matéria TCC00340 - Desenvolvimento de Aplicações Corporativas - 2020/2.</span>
+          <small className="text-muted">Esse trabalho foi desenvolvido para a matéria TCC00340 - Desenvolvimento de Aplicações Corporativas - 2020/2.</small>
         </div>
       </footer>
     </div>
