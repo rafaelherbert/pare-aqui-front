@@ -157,7 +157,7 @@ export default function Lots() {
                                         setLotOnlyParking(e.target.checked);
                                     }} />&nbsp;Apenas Estacionamentos Privados
                                 </label>
-                                <label className="form-check-label" htmlFor="withoutAccidents">
+                                <label className="form-check-label d-none" htmlFor="withoutAccidents">
                                     <input className="form-check-input" value="1" checked={lotWithoutAccidents ? true : false} type="checkbox" id="withoutAccidents" onChange={(e) => {
                                         setLotWithoutAccidents(e.target.checked);
                                     }} />&nbsp;Sem Histórico de Acidentes
